@@ -536,7 +536,7 @@
         }, 500);
     }
 
-    function handleTimeout() {
+   function handleTimeout() {
         gameState.isProcessing = true;
         playFailSound();
         let q = gameState.questionsArray[gameState.currentIndex];
@@ -545,7 +545,9 @@
         gameState.currentAnswer = q.ans;
         updateAnswerDisplay();
         display.classList.add('wrong'); 
-        setTimeout(() => { nextQuestion(); }, 1500);
+        
+        // แก้ไขเวลาตรงนี้: รอ 5 วินาที (5000 มิลลิวินาที) แล้วค่อยไปข้อต่อไป
+        setTimeout(() => { nextQuestion(); }, 5000);
     }
 
     function recordMistake(userAns) {
