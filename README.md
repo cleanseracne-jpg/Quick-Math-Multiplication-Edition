@@ -1,1 +1,0 @@
-# Quick-Math-Multiplication-Edition
