@@ -85,9 +85,31 @@
         .custom-range-box { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; }
         .custom-range-box select { flex: 1; padding: 10px; border-radius: 10px; border: 2px solid #F0F3F4; font-family: var(--font-head); font-size: 1.1rem; text-align: center; background: white; appearance: none; }
 
-        .game-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .timer-container { flex: 1; height: 10px; background: #D5D8DC; border-radius: 5px; margin: 0 15px; overflow: hidden; }
-        .timer-bar { height: 100%; background: var(--primary); width: 100%; transition: width 1s linear, background-color 0.3s; }
+        /* =========================================
+           GAME SCREEN (วงกลมจับเวลา)
+           ========================================= */
+        .game-topbar { position: relative; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        
+        .circle-timer {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-family: var(--font-head);
+            font-size: 1.5rem;
+            font-weight: 700;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transition: background-color 0.3s;
+            z-index: 2;
+        }
+
         .btn-exit { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; }
 
         .equation-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
@@ -103,6 +125,7 @@
         .num-btn.btn-enter { color: var(--primary); font-size: 1.3rem; }
 
         @media (max-width: 480px), (max-height: 750px) {
+            .circle-timer { width: 45px; height: 45px; font-size: 1.3rem; }
             .equation { font-size: 3.2rem; gap: 10px; }
             .answer-input { min-width: 70px; height: 70px; font-size: 3rem; border-radius: 12px; }
             .numpad { gap: 8px; }
@@ -147,7 +170,6 @@
                 <div class="tab">Challenge</div>
             </div>
 
-            <!-- เปลี่ยนคำภาษาอังกฤษเป็นไทย -->
             <div class="setting-row" onclick="openModal('modal-questions')">
                 <div class="setting-label">จำนวนข้อ</div>
                 <div class="setting-value" id="val-questions">10</div>
@@ -170,9 +192,10 @@
     <div id="screen-game" class="screen">
         <div class="game-topbar">
             <button class="btn-exit" onclick="showScreen('screen-menu')">✕</button>
-            <div class="timer-container" id="timer-ui" style="display:none;">
-                <div class="timer-bar" id="timer-bar"></div>
-            </div>
+            
+            <!-- เพิ่มวงกลมนับเวลาตรงนี้ -->
+            <div class="circle-timer" id="circle-timer" style="display:none;">10</div>
+
             <div style="font-weight:700; color:var(--text-muted); font-size: 0.9rem;" id="question-counter">1/10</div>
         </div>
 
@@ -287,7 +310,6 @@
         </div>
         <p style="font-size:0.9rem; color:var(--text-muted);">กำหนดแม่สูตรคูณเอง (เริ่มต้น - สิ้นสุด)</p>
         <div class="custom-range-box">
-            <!-- ส่ง parameter ระบุว่าตัวไหนถูกเปลี่ยน -->
             <select id="range-from" onchange="updateCustomRange('from')"></select>
             <span style="align-self:center; font-weight:bold;">ถึง</span>
             <select id="range-to" onchange="updateCustomRange('to')"></select>
@@ -384,24 +406,12 @@
         if(!isCustom) closeModal(null, true);
     }
 
-    // แก้ไขฟังก์ชันการเลือกช่วงแม่สูตรคูณให้ไม่สับสน
     function updateCustomRange(changedElement) {
         let f = parseInt(document.getElementById('range-from').value);
         let t = parseInt(document.getElementById('range-to').value);
-        
-        // ถ้าเลือกแม่เริ่มต้นมากกว่าแม่สิ้นสุด ให้ดันแม่สิ้นสุดตามขึ้นมา
-        if (changedElement === 'from' && f > t) {
-            t = f;
-            document.getElementById('range-to').value = t;
-        } 
-        // ถ้าเลือกแม่สิ้นสุดน้อยกว่าแม่เริ่มต้น ให้ดันแม่เริ่มต้นตามลงมา
-        else if (changedElement === 'to' && t < f) {
-            f = t;
-            document.getElementById('range-from').value = f;
-        }
-
-        config.rangeFrom = f; 
-        config.rangeTo = t;
+        if (changedElement === 'from' && f > t) { t = f; document.getElementById('range-to').value = t; } 
+        else if (changedElement === 'to' && t < f) { f = t; document.getElementById('range-from').value = f; }
+        config.rangeFrom = f; config.rangeTo = t;
         document.getElementById('val-range').innerText = `${f} - ${t}`;
         document.querySelectorAll('#modal-range .option-btn').forEach(btn => btn.classList.remove('selected'));
     }
@@ -439,7 +449,6 @@
         gameState.currentIndex = 0; gameState.correctCount = 0;
         gameState.mistakes = []; gameState.startTime = Date.now();
         showScreen('screen-game');
-        document.getElementById('timer-ui').style.display = config.time > 0 ? 'block' : 'none';
         renderQuestion();
     }
 
@@ -458,23 +467,32 @@
 
     function startTimer() {
         clearInterval(gameState.timerInterval);
-        if (config.time === 0) return;
+        const circle = document.getElementById('circle-timer');
+        
+        // ถ้าอยู่ในโหมดไม่จับเวลา ให้ซ่อนวงกลมไปเลย
+        if (config.time === 0) {
+            circle.style.display = 'none';
+            return;
+        }
+        
+        // เซ็ตค่าเริ่มต้นวงกลม
+        circle.style.display = 'flex';
+        circle.style.backgroundColor = 'var(--primary)'; // สีเขียว
         gameState.timeLeft = config.time;
-        const bar = document.getElementById('timer-bar');
-        bar.style.transition = 'none';
-        bar.style.width = '100%';
-        bar.style.backgroundColor = 'var(--primary)';
-        void bar.offsetWidth; 
-        bar.style.transition = 'width 1s linear, background-color 0.3s';
+        circle.innerText = gameState.timeLeft;
         
         gameState.timerInterval = setInterval(() => {
             gameState.timeLeft--;
-            let percent = (gameState.timeLeft / config.time) * 100;
-            bar.style.width = `${percent}%`;
-            if(percent <= 30) bar.style.backgroundColor = 'var(--red-error)';
-            if (gameState.timeLeft <= 0) {
+            
+            if (gameState.timeLeft > 0) {
+                circle.innerText = gameState.timeLeft;
+                // ถ้าเหลือน้อยกว่า 3 วินาที ให้เปลี่ยนเป็นสีแดงเตือน
+                if(gameState.timeLeft <= 3) {
+                    circle.style.backgroundColor = 'var(--red-error)';
+                }
+            } else {
                 clearInterval(gameState.timerInterval);
-                handleTimeout();
+                handleTimeout(); // ไปยังฟังก์ชันจัดการเมื่อหมดเวลา
             }
         }, 1000);
     }
@@ -536,7 +554,7 @@
         }, 500);
     }
 
-   function handleTimeout() {
+    function handleTimeout() {
         gameState.isProcessing = true;
         playFailSound();
         let q = gameState.questionsArray[gameState.currentIndex];
@@ -546,8 +564,22 @@
         updateAnswerDisplay();
         display.classList.add('wrong'); 
         
-        // แก้ไขเวลาตรงนี้: รอ 5 วินาที (5000 มิลลิวินาที) แล้วค่อยไปข้อต่อไป
-        setTimeout(() => { nextQuestion(); }, 5000);
+        // --- เริ่มนับถอยหลัง 5 วินาทีตอนเฉลย ---
+        const circle = document.getElementById('circle-timer');
+        circle.style.display = 'flex';
+        circle.style.backgroundColor = '#F39C12'; // เปลี่ยนเป็นสีส้มเพื่อบอกว่ากำลังรอ
+        let revealTime = 5;
+        circle.innerText = revealTime;
+        
+        gameState.timerInterval = setInterval(() => {
+            revealTime--;
+            if (revealTime > 0) {
+                circle.innerText = revealTime;
+            } else {
+                clearInterval(gameState.timerInterval);
+                nextQuestion();
+            }
+        }, 1000);
     }
 
     function recordMistake(userAns) {
@@ -599,23 +631,18 @@
     }
 
     // ==========================================
-    // KEYBOARD SUPPORT (รองรับการพิมพ์ด้วยแป้นพิมพ์)
+    // KEYBOARD SUPPORT
     // ==========================================
     document.addEventListener('keydown', function(event) {
         const gameScreen = document.getElementById('screen-game');
         if (!gameScreen.classList.contains('active')) return;
 
-        // ถ้ากดตัวเลข 0-9
         if (event.key >= '0' && event.key <= '9') {
             inputNum(parseInt(event.key));
-        } 
-        // ถ้ากดปุ่ม Backspace หรือ Delete เพื่อลบ
-        else if (event.key === 'Backspace' || event.key === 'Delete') {
+        } else if (event.key === 'Backspace' || event.key === 'Delete') {
             event.preventDefault();
             inputDel();
-        } 
-        // ถ้ากดปุ่ม Enter เพื่อส่งคำตอบ
-        else if (event.key === 'Enter') {
+        } else if (event.key === 'Enter') {
             event.preventDefault();
             checkAnswer(true);
         }
