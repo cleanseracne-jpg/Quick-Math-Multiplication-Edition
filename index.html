@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quick Math by ครูวิน ตุ้งติ้ง</title>
+    <!-- นำเข้าฟอนต์ Fredoka (สำหรับตัวเลข/หัวข้อ) และ Nunito (สำหรับข้อความทั่วไป) -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* =========================================
+           CSS VARIABLES & GLOBAL STYLES
+           ========================================= */
+        :root {
+            --primary: #2ECC71; /* สีเขียวหลักตาม Reference */
+            --primary-dark: #27AE60;
+            --bg-color: #EAECEE; /* สีพื้นหลังเทาอ่อน */
+            --card-bg: #FFFFFF;
+            --text-main: #2C3E50;
+            --text-muted: #7F8C8D;
+            --red-error: #E74C3C;
+            --blue-accent: #3498DB;
+            --font-head: 'Fredoka', sans-serif;
+            --font-body: 'Nunito', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* ป้องกันการคลุมดำข้อความ */
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            /* ลายพื้นหลังสัญลักษณ์คณิตศาสตร์จางๆ */
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(0,0,0,0.03) 2px, transparent 2px),
+                radial-gradient(circle at 80% 40%, rgba(0,0,0,0.03) 2px, transparent 2px),
+                radial-gradient(circle at 40% 80%, rgba(0,0,0,0.03) 2px, transparent 2px);
+            background-size: 100px 100px;
+        }
+
+        /* Container หลักจำลองหน้าจอ iPad/Mobile */
+        .app-container {
+            width: 100%;
+            max-width: 600px; /* ขนาดสูงสุดบน Desktop */
+            height: 100vh;
+            max-height: 900px;
+            background: var(--bg-color);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        @media (min-width: 650px) {
+            .app-container {
+                height: 90vh;
+                border-radius: 30px; /* มุมโค้งบน Desktop */
+            }
+        }
+
+        /* จัดการหน้าจอต่างๆ (Screens) */
+        .screen {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: var(--bg-color);
+            z-index: 1;
+        }
+        .screen.active {
+            display: flex;
+        }
+
+        /* =========================================
+           HEADER & BRANDING
+           ========================================= */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 20px;
+        }
+        .header h1 {
+            font-family: var(--font-head);
+            font-size: 2.5rem;
+            color: #111;
+            letter-spacing: -1px;
+        }
+        .header p {
+            font-size: 0.9rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* =========================================
+           MENU SCREEN (Settings)
+           ========================================= */
+        .menu-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: #F2F4F4;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            font-weight: 700;
+            border-radius: 10px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .tab.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 5px rgba(46, 204, 113, 0.3);
+        }
+
+        /* Settings List */
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #F0F3F4;
+            cursor: pointer;
+        }
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+        .setting-label {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .setting-value {
+            color: var(--primary);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .setting-value::after {
+            content: '›';
+            font-size: 1.5rem;
+            line-height: 1;
+            color: #BDC3C7;
+        }
+
+        .btn-start {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 18px;
+            font-family: var(--font-body);
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 15px;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 4px 0 var(--primary-dark);
+            transition: all 0.1s;
+        }
+        .btn-start:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 var(--primary-dark);
+        }
+
+        /* =========================================
+           MODALS (Bottom Sheets)
+           ========================================= */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 100;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        .modal-sheet {
+            position: absolute;
+            bottom: -100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            border-radius: 30px 30px 0 0;
+            padding: 20px;
+            padding-bottom: 40px;
+            transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .modal-overlay.active .modal-sheet {
+            bottom: 0;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-family: var(--font-head);
+            font-size: 1.2rem;
+        }
+        .modal-close {
+            background: #F2F4F4;
+            border: none;
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .modal-handle {
+            width: 40px; height: 5px;
+            background: #E5E7E9;
+            border-radius: 5px;
+            margin: 0 auto 15px auto;
+        }
+
+        /* Grid Buttons in Modals */
+        .grid-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .option-btn {
+            background: var(--card-bg);
+            border: 2px solid #F0F3F4;
+            padding: 12px;
+            border-radius: 12px;
+            font-family: var(--font-body);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .option-btn.selected {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* Custom Range inputs */
+        .custom-range-box {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .custom-range-box select {
+            flex: 1;
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid #F0F3F4;
+            font-family: var(--font-head);
+            font-size: 1.2rem;
+            text-align: center;
+            background: white;
+            appearance: none;
+        }
+
+        /* =========================================
+           GAME SCREEN
+           ========================================= */
+        .game-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .timer-container {
+            flex: 1;
+            height: 10px;
+            background: #D5D8DC;
+            border-radius: 5px;
+            margin: 0 15px;
+            overflow: hidden;
+        }
+        .timer-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 100%;
+            transition: width 0.1s linear, background-color 0.3s;
+        }
+        .btn-exit {
+            background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer;
+        }
+
+        /* Equation Display */
+        .equation-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .equation {
+            font-family: var(--font-head);
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .answer-input {
+            min-width: 80px;
+            height: 80px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3.5rem;
+            color: var(--blue-accent);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+            padding: 0 15px;
+            transition: color 0.2s;
+        }
+        .answer-input.correct { color: var(--primary); }
+        .answer-input.wrong { color: var(--red-error); }
+
+        /* Virtual Numpad */
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding-bottom: 20px;
+        }
+        .num-btn {
+            background: var(--card-bg);
+            border: none;
+            padding: 20px 0;
+            border-radius: 15px;
+            font-family: var(--font-head);
+            font-size: 1.8rem;
+            font-weight: 500;
+            color: var(--text-main);
+            box-shadow: 0 4px 0 #D5D8DC;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .num-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #D5D8DC;
+        }
+        .num-btn.btn-del { color: var(--red-error); }
+        
+        /* =========================================
+           RESULT SCREEN
+           ========================================= */
+        .result-header {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .result-header h2 { font-size: 1.5rem; color: var(--text-main); }
+        .percent-score {
+            font-family: var(--font-head);
+            font-size: 4.5rem;
+            color: var(--blue-accent);
+            line-height: 1;
+            margin: 10px 0;
+        }
+        .result-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px dashed #E5E7E9;
+        }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { color: var(--text-muted); font-weight: 600; }
+        .stat-val { font-weight: 700; color: var(--text-main); }
+
+        /* Mistake Review */
+        .mistakes-container {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+        .mistakes-title { font-weight: 700; margin-bottom: 10px; color: var(--text-muted); }
+        .mistake-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            font-family: var(--font-head);
+            font-size: 1.2rem;
+        }
+        .m-eq { width: 40%; text-align: left; }
+        .m-user { width: 30%; text-align: center; color: var(--red-error); font-size: 1rem;}
+        .m-correct { width: 30%; text-align: right; color: var(--primary); }
+
+        /* Actions */
+        .result-actions { display: flex; gap: 10px; padding-bottom: 20px;}
+        .btn-outline {
+            flex: 1;
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 15px;
+            border-radius: 15px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .btn-primary {
+            flex: 1;
+            background: var(--primary);
+            border: none;
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            font-weight: 700;
+            font-size: 1rem;
+            box-shadow: 0 4px 0 var(--primary-dark);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- =====================================
+         1. MENU / SETTINGS SCREEN
+         ===================================== -->
+    <div id="screen-menu" class="screen active">
+        <div class="header">
+            <h1>Quick Math</h1>
+            <p>By ครูวิน ตุ้งติ้ง</p>
+        </div>
+
+        <div class="menu-card">
+            <div class="tabs">
+                <div class="tab active">Practice</div>
+                <div class="tab">Challenge</div>
+            </div>
+
+            <div class="setting-row" onclick="openModal('modal-questions')">
+                <div class="setting-label">Questions</div>
+                <div class="setting-value" id="val-questions">10</div>
+            </div>
+            
+            <div class="setting-row" onclick="openModal('modal-time')">
+                <div class="setting-label">Time</div>
+                <div class="setting-value" id="val-time">Skip on Wrong</div>
+            </div>
+
+            <div class="setting-row" onclick="openModal('modal-range')">
+                <div class="setting-label">Range (แม่สูตรคูณ)</div>
+                <div class="setting-value" id="val-range">2 - 12</div>
+            </div>
+
+            <button class="btn-start" onclick="startGame()">Start Practice</button>
+        </div>
+    </div>
+
+    <!-- =====================================
+         2. GAMEPLAY SCREEN
+         ===================================== -->
+    <div id="screen-game" class="screen">
+        <div class="game-topbar">
+            <button class="btn-exit" onclick="showScreen('screen-menu')">✕</button>
+            <div class="timer-container" id="timer-ui" style="display:none;">
+                <div class="timer-bar" id="timer-bar"></div>
+            </div>
+            <div style="font-weight:700; color:var(--text-muted);" id="question-counter">1/10</div>
+        </div>
+
+        <div class="equation-box">
+            <div class="equation">
+                <span id="eq-num1">7</span>
+                <span>×</span>
+                <span id="eq-num2">8</span>
+                <span>=</span>
+                <div class="answer-input" id="answer-display"></div>
+            </div>
+        </div>
+
+        <div class="numpad">
+            <button class="num-btn" onclick="inputNum(1)">1</button>
+            <button class="num-btn" onclick="inputNum(2)">2</button>
+            <button class="num-btn" onclick="inputNum(3)">3</button>
+            <button class="num-btn" onclick="inputNum(4)">4</button>
+            <button class="num-btn" onclick="inputNum(5)">5</button>
+            <button class="num-btn" onclick="inputNum(6)">6</button>
+            <button class="num-btn" onclick="inputNum(7)">7</button>
+            <button class="num-btn" onclick="inputNum(8)">8</button>
+            <button class="num-btn" onclick="inputNum(9)">9</button>
+            <button class="num-btn btn-del" onclick="inputDel()">DEL</button>
+            <button class="num-btn" onclick="inputNum(0)">0</button>
+            <button class="num-btn" onclick="checkAnswer(true)" style="color:var(--primary); font-size:1.2rem;">ENTER</button>
+        </div>
+    </div>
+
+    <!-- =====================================
+         3. RESULT SCREEN
+         ===================================== -->
+    <div id="screen-result" class="screen">
+        <div class="result-header">
+            <h2>Congratulations!</h2>
+            <div class="percent-score" id="res-percent">97%</div>
+        </div>
+
+        <div class="result-card">
+            <p style="font-weight:700; margin-bottom:15px;">Great Work! ฝีมือยอดเยี่ยมจากห้องเรียนครูวิน ตุ้งติ้ง</p>
+            <div class="stat-row">
+                <span class="stat-label">Total Time</span>
+                <span class="stat-val" id="res-time">0:00</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Questions Correct</span>
+                <span class="stat-val" id="res-correct">0 of 10</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Timeouts / Errors</span>
+                <span class="stat-val" style="color:var(--red-error);" id="res-wrong">0</span>
+            </div>
+        </div>
+
+        <div class="mistakes-container">
+            <div class="mistakes-title" id="mistakes-title">Detailed Review</div>
+            <div id="mistakes-list">
+                <!-- ข้อมูลข้อผิดพลาดจะถูก Render ที่นี่ผ่าน JS -->
+            </div>
+        </div>
+
+        <div class="result-actions">
+            <button class="btn-outline" onclick="showScreen('screen-menu')">Menu</button>
+            <button class="btn-primary" onclick="startGame()">Play Again</button>
+        </div>
+    </div>
+
+</div>
+
+<!-- =====================================
+     MODAL OVERLAYS (Bottom Sheets)
+     ===================================== -->
+<div class="modal-overlay" id="overlay" onclick="closeModal(event)">
+    
+    <!-- Modal: Number of Questions -->
+    <div class="modal-sheet" id="modal-questions">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+            <span>Number of Questions</span>
+            <button class="modal-close" onclick="closeModal(null, true)">✕</button>
+        </div>
+        <div class="grid-options">
+            <button class="option-btn" onclick="setSetting('questions', 5)">5</button>
+            <button class="option-btn selected" onclick="setSetting('questions', 10)">10</button>
+            <button class="option-btn" onclick="setSetting('questions', 20)">20</button>
+            <button class="option-btn" onclick="setSetting('questions', 50)">50</button>
+        </div>
+        <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:5px;">Or choose custom (Max 100)</p>
+        <input type="number" id="custom-questions" min="1" max="100" value="100" style="width:100%; padding:10px; border-radius:10px; border:2px solid #F0F3F4; font-family:var(--font-head); font-size:1.2rem; text-align:center;" onchange="setSetting('questions', this.value, true)">
+    </div>
+
+    <!-- Modal: Time per Question -->
+    <div class="modal-sheet" id="modal-time">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+            <span>Time per Question</span>
+            <button class="modal-close" onclick="closeModal(null, true)">✕</button>
+        </div>
+        <button class="option-btn selected" style="width:100%; margin-bottom:15px; background:#FFF9C4; border-color:#FBC02D; color:#F39C12;" onclick="setSetting('time', 0)">
+            Skip on Wrong<br><span style="font-size:0.8rem; font-weight:normal;">No timer, wait until correct</span>
+        </button>
+        <div class="grid-options">
+            <button class="option-btn" onclick="setSetting('time', 3)">3 sec</button>
+            <button class="option-btn" onclick="setSetting('time', 5)">5 sec</button>
+            <button class="option-btn" onclick="setSetting('time', 10)">10 sec</button>
+            <button class="option-btn" onclick="setSetting('time', 15)">15 sec</button>
+        </div>
+    </div>
+
+    <!-- Modal: Range -->
+    <div class="modal-sheet" id="modal-range">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+            <span>Number Range (แม่สูตรคูณ)</span>
+            <button class="modal-close" onclick="closeModal(null, true)">✕</button>
+        </div>
+        <div class="grid-options">
+            <button class="option-btn" onclick="setSetting('range', '2-9')">แม่ 2 - 9</button>
+            <button class="option-btn selected" onclick="setSetting('range', '2-12')">แม่ 2 - 12</button>
+            <button class="option-btn" onclick="setSetting('range', '2-25')">แม่ 2 - 25</button>
+            <button class="option-btn" onclick="setSetting('range', '13-25')">แม่ 13 - 25</button>
+        </div>
+        <p style="font-size:0.9rem; color:var(--text-muted);">Custom range (เลือกแม่เริ่มต้น - สิ้นสุด)</p>
+        <div class="custom-range-box">
+            <!-- ใช้ Select เพื่อสร้างประสบการณ์คล้าย Picker (วงล้อ) บนมือถือ -->
+            <select id="range-from" onchange="updateCustomRange()">
+                <!-- จะถูกเติมด้วย JS -->
+            </select>
+            <span style="align-self:center; font-weight:bold;">To</span>
+            <select id="range-to" onchange="updateCustomRange()">
+                <!-- จะถูกเติมด้วย JS -->
+            </select>
+        </div>
+    </div>
+
+</div>
+
+<!-- =====================================
+     JAVASCRIPT LOGIC
+     ===================================== -->
+<script>
+    // --- ตัวแปรการตั้งค่า ---
+    let config = {
+        questions: 10,
+        time: 0, // 0 = ไม่จับเวลา
+        rangeFrom: 2,
+        rangeTo: 12
+    };
+
+    // --- ตัวแปรสถานะเกม ---
+    let gameState = {
+        questionsArray: [],
+        currentIndex: 0,
+        currentAnswer: "",
+        correctCount: 0,
+        mistakes: [], // เก็บ {q: "2x3", userAns: "5", correctAns: 6}
+        startTime: 0,
+        timerInterval: null,
+        timeLeft: 0,
+        isProcessing: false // ป้องกันการกดซ้ำตอนเปลี่ยนข้อ
+    };
+
+    // --- Web Audio API (สร้างเสียง Synthesizer) ---
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+
+    function initAudio() {
+        if(!audioCtx) audioCtx = new AudioContext();
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playSuccessSound() {
+        initAudio();
+        const t = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.type = 'sine';
+        // เสียง C-E-G ใสๆ เร็วๆ
+        osc.frequency.setValueAtTime(523.25, t); // C5
+        osc.frequency.setValueAtTime(659.25, t + 0.1); // E5
+        osc.frequency.setValueAtTime(783.99, t + 0.2); // G5
+        
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.5, t + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.4);
+    }
+
+    function playFailSound() {
+        initAudio();
+        const t = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, t);
+        osc.frequency.exponentialRampToValueAtTime(40, t + 0.3); // เสียงต่ำลง
+        
+        gain.gain.setValueAtTime(0.3, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.3);
+    }
+
+    // --- UI/UX Functions ---
+    function showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    function openModal(modalId) {
+        document.getElementById('overlay').classList.add('active');
+        document.querySelectorAll('.modal-sheet').forEach(m => m.style.zIndex = 1);
+        document.getElementById(modalId).style.zIndex = 2;
+        // ดัน sheet อื่นลงให้ชัวร์
+        document.querySelectorAll('.modal-sheet').forEach(m => m.style.bottom = '-100%');
+        setTimeout(() => {
+            document.getElementById(modalId).style.bottom = '0';
+        }, 10);
+    }
+
+    function closeModal(event, force = false) {
+        if (force || event.target.id === 'overlay') {
+            document.querySelectorAll('.modal-sheet').forEach(m => m.style.bottom = '-100%');
+            setTimeout(() => {
+                document.getElementById('overlay').classList.remove('active');
+            }, 300);
+        }
+    }
+
+    // --- การตั้งค่า (Settings Logic) ---
+    function setSetting(type, value, isCustom = false) {
+        const modal = document.getElementById(`modal-${type}`);
+        
+        // อัปเดต UI ปุ่ม
+        if(!isCustom) {
+            modal.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+        }
+
+        if (type === 'questions') {
+            config.questions = parseInt(value);
+            document.getElementById('val-questions').innerText = config.questions;
+        } 
+        else if (type === 'time') {
+            config.time = parseInt(value);
+            document.getElementById('val-time').innerText = config.time === 0 ? "Skip on Wrong" : `${config.time} sec`;
+        }
+        else if (type === 'range') {
+            let parts = value.split('-');
+            config.rangeFrom = parseInt(parts[0]);
+            config.rangeTo = parseInt(parts[1]);
+            document.getElementById('val-range').innerText = `${config.rangeFrom} - ${config.rangeTo}`;
+            
+            // Sync กลับไปที่ Select
+            document.getElementById('range-from').value = config.rangeFrom;
+            document.getElementById('range-to').value = config.rangeTo;
+        }
+
+        if(!isCustom) closeModal(null, true);
+    }
+
+    function updateCustomRange() {
+        let f = parseInt(document.getElementById('range-from').value);
+        let t = parseInt(document.getElementById('range-to').value);
+        if(f > t) {
+            // สลับค่าถ้าผู้ใช้เลือก From มากกว่า To
+            let temp = f; f = t; t = temp;
+            document.getElementById('range-from').value = f;
+            document.getElementById('range-to').value = t;
+        }
+        config.rangeFrom = f;
+        config.rangeTo = t;
+        document.getElementById('val-range').innerText = `${f} - ${t}`;
+        
+        // เอา selected ออกจากปุ่ม quick options
+        document.querySelectorAll('#modal-range .option-btn').forEach(btn => btn.classList.remove('selected'));
+    }
+
+    // เตรียมค่าตัวเลือก Custom Range 2-25
+    window.onload = () => {
+        let optionsHTML = '';
+        for(let i=2; i<=25; i++) {
+            optionsHTML += `<option value="${i}">แม่ ${i}</option>`;
+        }
+        document.getElementById('range-from').innerHTML = optionsHTML;
+        document.getElementById('range-to').innerHTML = optionsHTML;
+        document.getElementById('range-from').value = 2;
+        document.getElementById('range-to').value = 12;
+    };
+
+    // --- ระบบเกมเพลย์ (Gameplay Logic) ---
+
+    // สุ่มโจทย์ตามจำนวนข้อที่ตั้งไว้
+    function generateQuestions() {
+        let pool = [];
+        // สร้าง Pool ตามช่วงแม่สูตรคูณ ตัวคูณ 1-12
+        for (let i = config.rangeFrom; i <= config.rangeTo; i++) {
+            for (let j = 1; j <= 12; j++) {
+                pool.push({ n1: i, n2: j, ans: i * j });
+            }
+        }
+        
+        // Shuffle Pool (Fisher-Yates)
+        for (let i = pool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+
+        // เลือกมาตามจำนวนข้อ ถ้าข้อที่ต้องการมีมากกว่า Pool ให้วนซ้ำ
+        gameState.questionsArray = [];
+        let poolIndex = 0;
+        for (let i = 0; i < config.questions; i++) {
+            if (poolIndex >= pool.length) poolIndex = 0; // รีเซ็ตถ้าดึงจนหมดแล้ว
+            // Clone object เพื่อให้เป็นคนละตัวกันใน Array
+            gameState.questionsArray.push({...pool[poolIndex]});
+            poolIndex++;
+        }
+    }
+
+    function startGame() {
+        initAudio(); // ปลดล็อก AudioContext เมื่อมีการคลิก
+        generateQuestions();
+        
+        gameState.currentIndex = 0;
+        gameState.correctCount = 0;
+        gameState.mistakes = [];
+        gameState.startTime = Date.now();
+        
+        showScreen('screen-game');
+        
+        // จัดการ UI เรื่องเวลา
+        if(config.time > 0) {
+            document.getElementById('timer-ui').style.display = 'block';
+        } else {
+            document.getElementById('timer-ui').style.display = 'none';
+        }
+
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        gameState.isProcessing = false;
+        gameState.currentAnswer = "";
+        updateAnswerDisplay();
+        
+        const display = document.getElementById('answer-display');
+        display.classList.remove('correct', 'wrong');
+
+        let q = gameState.questionsArray[gameState.currentIndex];
+        document.getElementById('eq-num1').innerText = q.n1;
+        document.getElementById('eq-num2').innerText = q.n2;
+        document.getElementById('question-counter').innerText = `${gameState.currentIndex + 1} / ${config.questions}`;
+
+        startTimer();
+    }
+
+    function startTimer() {
+        clearInterval(gameState.timerInterval);
+        if (config.time === 0) return; // ไม่จับเวลา
+
+        gameState.timeLeft = config.time;
+        const bar = document.getElementById('timer-bar');
+        
+        // รีเซ็ต Bar (ปิด transition ชั่วคราวเพื่อให้กลับไปเต็มทันที)
+        bar.style.transition = 'none';
+        bar.style.width = '100%';
+        bar.style.backgroundColor = 'var(--primary)';
+        
+        // บังคับให้เบราว์เซอร์วาด UI ใหม่
+        void bar.offsetWidth;
+        
+        // เปิด transition อีกครั้ง
+        bar.style.transition = 'width 1s linear, background-color 0.3s';
+        
+        gameState.timerInterval = setInterval(() => {
+            gameState.timeLeft--;
+            let percent = (gameState.timeLeft / config.time) * 100;
+            bar.style.width = `${percent}%`;
+
+            if(percent <= 30) {
+                bar.style.backgroundColor = 'var(--red-error)'; // เปลี่ยนสีเป็นแดงเมื่อใกล้หมดเวลา
+            }
+
+            if (gameState.timeLeft <= 0) {
+                clearInterval(gameState.timerInterval);
+                handleTimeout();
+            }
+        }, 1000);
+    }
+
+    // พิมพ์ตัวเลข (จาก Numpad)
+    function inputNum(num) {
+        if(gameState.isProcessing) return;
+        
+        // กำหนดความยาวสูงสุดของคำตอบ (เช่น 999)
+        if(gameState.currentAnswer.length < 4) {
+            gameState.currentAnswer += num.toString();
+            updateAnswerDisplay();
+            checkAnswer(); // ตรวจสอบแบบ Real-time
+        }
+    }
+
+    function inputDel() {
+        if(gameState.isProcessing || gameState.currentAnswer.length === 0) return;
+        gameState.currentAnswer = gameState.currentAnswer.slice(0, -1);
+        updateAnswerDisplay();
+        
+        const display = document.getElementById('answer-display');
+        display.classList.remove('wrong'); // ลบสีแดงออกเวลาลบ
+    }
+
+    function updateAnswerDisplay() {
+        document.getElementById('answer-display').innerText = gameState.currentAnswer;
+    }
+
+    function checkAnswer(forceCheck = false) {
+        let q = gameState.questionsArray[gameState.currentIndex];
+        let correctAns = q.ans.toString();
+        let userAns = gameState.currentAnswer;
+        const display = document.getElementById('answer-display');
+
+        // ตรวจสอบแบบ Real-time: ถ้าพิมพ์ถูกครบแล้วให้ผ่านเลย
+        if (userAns === correctAns) {
+            processCorrect();
+            return;
+        }
+
+        // กรณีความยาวตัวอักษรเท่ากับเฉลยแล้วแต่ยังผิด หรือ กดปุ่ม Enter(forceCheck)
+        if (userAns.length === correctAns.length || forceCheck) {
+            if(userAns !== correctAns && userAns.length > 0) {
+                processWrong();
+            }
+        }
+    }
+
+    function processCorrect() {
+        gameState.isProcessing = true;
+        clearInterval(gameState.timerInterval);
+        playSuccessSound();
+        
+        const display = document.getElementById('answer-display');
+        display.classList.add('correct');
+        
+        gameState.correctCount++;
+
+        setTimeout(() => {
+            nextQuestion();
+        }, 400); // ดีเลย์เล็กน้อยให้เห็นสีเขียว
+    }
+
+    function processWrong() {
+        playFailSound();
+        const display = document.getElementById('answer-display');
+        display.classList.add('wrong');
+        
+        // บันทึกข้อผิดพลาด (ถ้ายังไม่เคยบันทึกข้อนี้)
+        recordMistake(gameState.currentAnswer);
+
+        // ให้เคลียร์ช่องอัตโนมัติหลังสั่น/โชว์แดง
+        setTimeout(() => {
+            if(!gameState.isProcessing) {
+                gameState.currentAnswer = "";
+                updateAnswerDisplay();
+                display.classList.remove('wrong');
+            }
+        }, 500);
+    }
+
+    function handleTimeout() {
+        gameState.isProcessing = true;
+        playFailSound();
+        
+        let q = gameState.questionsArray[gameState.currentIndex];
+        const display = document.getElementById('answer-display');
+        
+        // บันทึกว่าเป็น Timeout
+        recordMistake("Timeout");
+        
+        // แสดงเฉลย
+        gameState.currentAnswer = q.ans;
+        updateAnswerDisplay();
+        display.classList.add('wrong'); // แสดงสีแดงเพื่อบอกว่าผิด/หมดเวลา
+
+        // รอ 1.5 วินาทีแล้วไปข้อต่อไป
+        setTimeout(() => {
+            nextQuestion();
+        }, 1500);
+    }
+
+    function recordMistake(userAns) {
+        let q = gameState.questionsArray[gameState.currentIndex];
+        let eqStr = `${q.n1} × ${q.n2}`;
+        
+        // เช็คว่าข้อนี้บันทึกลงไปหรือยัง จะได้ไม่ซ้ำซ้อนถ้ากรอกผิดหลายรอบในข้อเดียว
+        let exists = gameState.mistakes.find(m => m.eq === eqStr);
+        if(!exists) {
+            gameState.mistakes.push({
+                eq: eqStr,
+                user: userAns || "Timeout",
+                correct: q.ans
+            });
+        }
+    }
+
+    function nextQuestion() {
+        gameState.currentIndex++;
+        if (gameState.currentIndex < config.questions) {
+            renderQuestion();
+        } else {
+            endGame();
+        }
+    }
+
+    // --- หน้าสรุปผล (Result Screen) ---
+    function endGame() {
+        clearInterval(gameState.timerInterval);
+        
+        // คำนวณเวลาที่ใช้ไป
+        let timeTaken = Math.floor((Date.now() - gameState.startTime) / 1000);
+        let min = Math.floor(timeTaken / 60);
+        let sec = timeTaken % 60;
+        let timeStr = `${min}:${sec < 10 ? '0' : ''}${sec}`;
+
+        // คำนวณเปอร์เซ็นต์
+        let percent = Math.round((gameState.correctCount / config.questions) * 100);
+
+        // อัปเดต UI หน้า Result
+        document.getElementById('res-percent').innerText = `${percent}%`;
+        document.getElementById('res-percent').style.color = percent >= 80 ? 'var(--primary)' : (percent >= 50 ? 'var(--blue-accent)' : 'var(--red-error)');
+        
+        document.getElementById('res-time').innerText = timeStr;
+        document.getElementById('res-correct').innerText = `${gameState.correctCount} of ${config.questions}`;
+        document.getElementById('res-wrong').innerText = gameState.mistakes.length;
+
+        // Render รายการข้อผิดพลาด
+        const listDiv = document.getElementById('mistakes-list');
+        const titleDiv = document.getElementById('mistakes-title');
+        listDiv.innerHTML = "";
+
+        if(gameState.mistakes.length === 0) {
+            titleDiv.innerText = "Perfect! ไม่มีข้อผิดพลาดเลย 🎉";
+        } else {
+            titleDiv.innerText = "Detailed Mistake Review";
+            gameState.mistakes.forEach(m => {
+                listDiv.innerHTML += `
+                    <div class="mistake-item">
+                        <div class="m-eq">${m.eq}</div>
+                        <div class="m-user">${m.user}</div>
+                        <div class="m-correct">${m.correct}</div>
+                    </div>
+                `;
+            });
+        }
+
+        showScreen('screen-result');
+    }
+
+</script>
+</body>
+</html>
