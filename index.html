@@ -662,7 +662,29 @@
         }
         showScreen('screen-result');
     }
+// ==========================================
+    // KEYBOARD SUPPORT (รองรับการพิมพ์ด้วยแป้นพิมพ์)
+    // ==========================================
+    document.addEventListener('keydown', function(event) {
+        // ทำงานเฉพาะตอนที่อยู่หน้าจอเกมเพลย์ (screen-game) เท่านั้น
+        const gameScreen = document.getElementById('screen-game');
+        if (!gameScreen.classList.contains('active')) return;
 
+        // ถ้ากดตัวเลข 0-9
+        if (event.key >= '0' && event.key <= '9') {
+            inputNum(parseInt(event.key));
+        } 
+        // ถ้ากดปุ่ม Backspace หรือ Delete เพื่อลบ
+        else if (event.key === 'Backspace' || event.key === 'Delete') {
+            event.preventDefault(); // ป้องกันเบราว์เซอร์เด้งกลับหน้าอื่น
+            inputDel();
+        } 
+        // ถ้ากดปุ่ม Enter เพื่อส่งคำตอบ
+        else if (event.key === 'Enter') {
+            event.preventDefault();
+            checkAnswer(true);
+        }
+    });
 </script>
 </body>
 </html>
